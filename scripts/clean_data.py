@@ -1,6 +1,9 @@
 import pandas as pd
 import zipfile
 import os
+from logger import init, step, done, finish
+
+init("clean_data.py")
 
 # Build absolute path relative to THIS script's location
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -8,6 +11,7 @@ DATA_DIR = os.path.join(BASE_DIR, "..", "data", "raw")
 
 print(os.path.exists(os.path.join(DATA_DIR, "g_inventor_disambiguated.tsv.zip")))
 
+step("Cleaning patents")
 def extract_and_read(zip_path, filename, cols=None):
     with zipfile.ZipFile(zip_path, 'r') as z:
         with z.open(filename) as f:
@@ -22,3 +26,7 @@ assignees_df = extract_and_read(os.path.join(DATA_DIR, "g_assignee_disambiguated
 
 print(patents_df.head())
 print(patents_df.columns.tolist())
+
+done()
+
+finish()

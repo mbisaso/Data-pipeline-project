@@ -2,6 +2,9 @@
 import pandas as pd
 import sqlite3
 import os
+from logger import init, step, done, finish
+
+init("load_to_db.py") 
 
 DB_PATH = "patents.db"
 
@@ -13,6 +16,7 @@ if os.path.exists(DB_PATH):
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 
+step("Creating schema")
 # 1 Create schema
 print("Creating tables...")
 cursor.executescript("""
@@ -58,6 +62,9 @@ cursor.executescript("""
 """)
 conn.commit()
 print(" Schema created")
+done("Schema ready")
+    
+step("Loading CSVs")
 
 # 2. Load CSVs into DB 
 def load_table(csv_path, table_name, chunksize=100_000):
@@ -76,7 +83,9 @@ load_table("data/clean/clean_companies.csv", "companies")
 load_table("data/clean/patent_inventor.csv", "patent_inventor")
 load_table("data/clean/patent_company.csv",  "patent_company")
 load_table("data/clean/clean_locations.csv", "locations")
+done("All CSVs loaded into DB")
 
+step("Adding indexes")
 # 3 Adding indexes for faster queries 
 print("Adding indexes...")
 cursor.executescript("""
@@ -91,6 +100,7 @@ cursor.executescript("""
 """)
 conn.commit()
 print("Indexes created")
+done("Indexes added")
 
 #4 Verify row counts
 print("\n Verification ")
@@ -101,3 +111,5 @@ for table in tables:
 
 conn.close()
 print("\nDatabase ready: patents.db")
+
+finish() 

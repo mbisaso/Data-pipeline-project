@@ -1,0 +1,101 @@
+
+=======================================================
+STARTED  load_to_db.py  [2026-05-07 11:15:10]
+=======================================================
+  >> Creating schema
+  OK Schema ready  (0.1s)
+  >> Loading CSVs
+  OK All CSVs loaded into DB  (712.1s)
+  >> Adding indexes
+  OK Indexes added  (315.3s)
+FINISHED load_to_db.py  — total 1043.7s  [11:32:34]
+
+=======================================================
+STARTED  add_indexes.py  [2026-05-07 11:35:16]
+=======================================================
+  >> idx_patents_year
+  OK idx_patents_year  (0.0s)
+  >> idx_pat_co_company_id
+  OK idx_pat_co_company_id  (24.9s)
+  >> idx_pat_co_patent_id
+  OK idx_pat_co_patent_id  (18.6s)
+  >> idx_pat_inv_inventor_id
+  OK idx_pat_inv_inventor_id  (105.9s)
+  >> idx_pat_inv_patent_id
+  OK idx_pat_inv_patent_id  (62.2s)
+FINISHED add_indexes.py  — total 211.6s  [11:38:47]
+
+=======================================================
+STARTED  add_compound_indexes.py  [2026-05-07 11:41:07]
+=======================================================
+  >> idx_patents_id_year
+  OK idx_patents_id_year  (18.4s)
+  >> idx_pc_covering
+  OK idx_pc_covering  (56.6s)
+  >> idx_pi_covering
+  OK idx_pi_covering  (143.7s)
+FINISHED add_compound_indexes.py  — total 218.8s  [11:44:46]
+
+=======================================================
+STARTED  build_summary_tables.py  [2026-05-07 11:49:06]
+=======================================================
+  >> yearly_patent_counts
+
+=======================================================
+STARTED  build_summary_tables.py  [2026-05-07 11:59:24]
+=======================================================
+  >> yearly_patent_counts
+  OK yearly_patent_counts  (1.4s)
+  >> tmp_patent_ids
+  OK tmp_patent_ids  (29.8s)
+  >> company_patent_counts
+  OK company_patent_counts  (310.7s)
+  >> inventor_patent_counts
+  OK inventor_patent_counts  (4765.4s)
+  >> tmp_top3_companies
+  OK tmp_top3_companies  (0.0s)
+  >> company_yearly_counts
+  OK company_yearly_counts  (141.3s)
+  >> cleanup temp tables
+  OK cleanup temp tables  (1.6s)
+FINISHED build_summary_tables.py  — total 5250.6s  [13:26:54]
+
+=======================================================
+STARTED  analytics.py  [2026-05-07 13:28:30]
+=======================================================
+  >> Connecting to patents.db
+  OK Connected  (0.5s)
+  >> Loading from pre-aggregated summary tables
+  OK Summary tables loaded  (0.0s)
+  >> Descriptive analytics
+  OK Descriptive analytics  (0.1s)
+  >> Chart 9: YoY Growth Rate
+  OK Chart 9: YoY Growth Rate  (4.0s)
+  >> Chart 10: Linear Regression Forecast
+  OK Chart 10: Linear Regression Forecast  (1.1s)
+  >> Chart 11: Polynomial Regression Forecast
+  OK Chart 11: Polynomial Regression Forecast  (1.3s)
+FINISHED analytics.py  — total 7.1s  [13:28:37]
+
+=======================================================
+STARTED  visualize.py  [2026-05-07 13:30:18]
+=======================================================
+  >> Connecting to patents.db
+  OK Connected  (0.0s)
+  >> Chart 1: Patents Per Year
+  OK Chart 1: Patents Per Year  (4.2s)
+  >> Chart 2: Top 10 Inventors
+  OK Chart 2: Top 10 Inventors  (1175.0s)
+  >> Chart 3: Top 10 Companies
+  OK Chart 3: Top 10 Companies  (273.3s)
+  >> Chart 4: Patent Types
+  OK Chart 4: Patent Types  (4.6s)
+  >> Chart 5: Patents Per Decade
+  OK Chart 5: Patents Per Decade  (9.0s)
+  >> Chart 6: Top Inventors (2015–Present)
+  OK Chart 6: Top Inventors (2015–Present)  (667.5s)
+  >> Chart 7: Top Companies (2015–Present)
+  OK Chart 7: Top Companies (2015–Present)  (461.9s)
+  >> Chart 8: Top 15 Countries
+  OK Chart 8: Top 15 Countries  (1677.3s)
+FINISHED visualize.py  — total 4272.8s  [14:41:31]

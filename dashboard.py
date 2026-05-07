@@ -1,0 +1,261 @@
+# dashboard.py
+import streamlit as st
+import sqlite3
+import pandas as pd
+import json
+import os
+
+# ── Page config ───────────────────────────────────────────────
+st.set_page_config(
+    page_title="Global Patent Intelligence",
+    page_icon="🔬",
+    layout="wide"
+)
+
+# ── Connect to DB ─────────────────────────────────────────────
+@st.cache_resource
+def get_connection():
+    conn = sqlite3.connect("patents.db", check_same_thread=False)
+    conn.execute("PRAGMA cache_size=-64000;")
+    conn.execute("PRAGMA temp_store=MEMORY;")
+    return conn
+
+conn = get_connection()
+
+# ── Load data from pre-built summary tables (instant) ─────────
+@st.cache_data
+def load_top_inventors():
+    return pd.read_sql("""
+        SELECT name, patent_count FROM inventor_patent_counts
+        ORDER BY patent_count DESC LIMIT 10;
+    """, conn)
+
+@st.cache_data
+def load_top_companies():
+    return pd.read_sql("""
+        SELECT name, patent_count FROM company_patent_counts
+        ORDER BY patent_count DESC LIMIT 10;
+    """, conn)
+
+@st.cache_data
+def load_trends():
+    return pd.read_sql("""
+        SELECT year, total_patents FROM yearly_patent_counts ORDER BY year;
+    """, conn)
+
+@st.cache_data
+def load_summary():
+    total     = conn.execute("SELECT SUM(total_patents) FROM yearly_patent_counts").fetchone()[0]
+    total_inv = conn.execute("SELECT COUNT(*) FROM inventor_patent_counts").fetchone()[0]
+    total_co  = conn.execute("SELECT COUNT(*) FROM company_patent_counts").fetchone()[0]
+    return int(total or 0), int(total_inv), int(total_co)
+
+@st.cache_data
+def load_countries():
+    COUNTRY_NAMES = {
+        'US':'United States','JP':'Japan','DE':'Germany',
+        'CN':'China','KR':'South Korea','TW':'Taiwan',
+        'GB':'United Kingdom','CA':'Canada','FR':'France',
+        'CH':'Switzerland','SE':'Sweden','NL':'Netherlands',
+        'IL':'Israel','AU':'Australia','IT':'Italy',
+        'FI':'Finland','IN':'India','BE':'Belgium',
+        'SG':'Singapore','NO':'Norway','RU':'Russia',
+        'ES':'Spain','BR':'Brazil','AT':'Austria','DK':'Denmark',
+    }
+    df = pd.read_sql("""
+        SELECT l.country AS country_code,
+               COUNT(DISTINCT pi.patent_id) AS patent_count
+        FROM inventors i
+        JOIN patent_inventor pi ON i.inventor_id = pi.inventor_id
+        JOIN locations l        ON i.country     = l.location_id
+        WHERE l.country IS NOT NULL AND l.country != ''
+        GROUP BY l.country
+        ORDER BY patent_count DESC
+        LIMIT 15;
+    """, conn)
+    df['country'] = df['country_code'].map(COUNTRY_NAMES).fillna(df['country_code'])
+    return df
+
+# ── Helper to show saved chart images ─────────────────────────
+def show_chart(filename, caption=""):
+    path = f"reports/charts/{filename}"
+    if os.path.exists(path):
+        st.image(path, caption=caption, use_container_width=True)
+    else:
+        st.warning(f"Chart not found: {filename}. Run visualize.py first.")
+
+# ══════════════════════════════════════════════════════════════
+#  SIDEBAR
+# ══════════════════════════════════════════════════════════════
+st.sidebar.title("Patent Intelligence")
+st.sidebar.markdown("---")
+page = st.sidebar.radio("Navigate to", [
+    "Overview",
+    "Top Inventors",
+    "Top Companies",
+    "Countries",
+    "Trends Over Time",
+    "Predictive Analytics",
+    "Search Patents",
+])
+st.sidebar.markdown("---")
+st.sidebar.caption("Data: USPTO PatentsView")
+st.sidebar.caption("Coverage: 1976 – present")
+
+# ══════════════════════════════════════════════════════════════
+#  PAGE 1 — OVERVIEW
+# ══════════════════════════════════════════════════════════════
+if page == "Overview":
+    st.title("Global Patent Intelligence Dashboard")
+    st.markdown("Analyzing **9+ million U.S. patents** from 1976 to present.")
+    st.markdown("---")
+
+    total, total_inv, total_co = load_summary()
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Patents",   f"{total:,}")
+    col2.metric("Total Inventors", f"{total_inv:,}")
+    col3.metric("Total Companies", f"{total_co:,}")
+
+    st.markdown("---")
+
+    json_path = "reports/report.json"
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            report = json.load(f)
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.subheader("Top 5 Inventors")
+            inv_df = pd.DataFrame(report['top_inventors'][:5])
+            st.dataframe(inv_df[['rank','name','patents']], hide_index=True, use_container_width=True)
+        with col_b:
+            st.subheader("Top 5 Companies")
+            co_df = pd.DataFrame(report['top_companies'][:5])
+            st.dataframe(co_df[['rank','name','patents']], hide_index=True, use_container_width=True)
+    else:
+        st.info("Run run_queries.py to generate report.json")
+
+    st.markdown("---")
+    st.subheader("Patent Grants Over Time")
+    show_chart("01_patents_per_year.png")
+
+# ══════════════════════════════════════════════════════════════
+#  PAGE 2 — TOP INVENTORS
+# ══════════════════════════════════════════════════════════════
+elif page == "Top Inventors":
+    st.title("Top Inventors")
+    st.markdown("---")
+    tab1, tab2 = st.tabs(["All Time", "Since 2015"])
+    with tab1:
+        st.subheader("All-Time Top 10 Inventors")
+        show_chart("02_top_inventors.png")
+        df = load_top_inventors()
+        df.index = range(1, len(df) + 1)
+        df.index.name = "Rank"
+        st.dataframe(df, use_container_width=True)
+    with tab2:
+        st.subheader("Top 10 Inventors (2015–Present)")
+        show_chart("06_top_inventors_recent.png")
+
+# ══════════════════════════════════════════════════════════════
+#  PAGE 3 — TOP COMPANIES
+# ══════════════════════════════════════════════════════════════
+elif page == "Top Companies":
+    st.title("Top Companies")
+    st.markdown("---")
+    tab1, tab2 = st.tabs(["All Time", "Since 2015"])
+    with tab1:
+        st.subheader("All-Time Top 10 Companies")
+        show_chart("03_top_companies.png")
+        df = load_top_companies()
+        df.index = range(1, len(df) + 1)
+        df.index.name = "Rank"
+        st.dataframe(df, use_container_width=True)
+    with tab2:
+        st.subheader("Top 10 Companies (2015–Present)")
+        show_chart("07_top_companies_recent.png")
+
+# ══════════════════════════════════════════════════════════════
+#  PAGE 4 — COUNTRIES
+# ══════════════════════════════════════════════════════════════
+elif page == "Countries":
+    st.title("Countries by Patent Count")
+    st.markdown("---")
+    show_chart("08_top_countries.png")
+    st.subheader("Data Table")
+    df = load_countries()
+    total = df['patent_count'].sum()
+    df['share %'] = (df['patent_count'] / total * 100).round(2)
+    df.index = range(1, len(df) + 1)
+    df.index.name = "Rank"
+    st.dataframe(df[['country','patent_count','share %']], use_container_width=True)
+
+# ══════════════════════════════════════════════════════════════
+#  PAGE 5 — TRENDS OVER TIME
+# ══════════════════════════════════════════════════════════════
+elif page == "Trends Over Time":
+    st.title("Patent Trends Over Time")
+    st.markdown("---")
+    tab1, tab2, tab3 = st.tabs(["Yearly Trend", "By Decade", "Patent Types"])
+    with tab1:
+        show_chart("01_patents_per_year.png")
+        st.subheader("Raw Data")
+        st.dataframe(load_trends(), use_container_width=True, hide_index=True)
+    with tab2:
+        show_chart("05_patents_per_decade.png")
+    with tab3:
+        show_chart("04_patent_types.png")
+
+# ══════════════════════════════════════════════════════════════
+#  PAGE 6 — PREDICTIVE ANALYTICS
+# ══════════════════════════════════════════════════════════════
+elif page == "Predictive Analytics":
+    st.title("Predictive Analytics")
+    st.markdown("Patent count forecasts using machine learning models.")
+    st.markdown("---")
+    tab1, tab2, tab3 = st.tabs([
+        "YoY Growth Rate",
+        "Linear Regression Forecast",
+        "Polynomial Regression Forecast",
+    ])
+    with tab1:
+        st.subheader("Year-over-Year Growth Rate (%)")
+        st.caption("Blue = growth year   |   Red = decline year")
+        show_chart("09_yoy_growth.png")
+    with tab2:
+        st.subheader("Linear Regression Forecast (2025–2030)")
+        st.caption("Assumes patent growth continues at the same average rate.")
+        show_chart("10_forecast_linear.png")
+    with tab3:
+        st.subheader("Polynomial Regression Forecast (2025–2030)")
+        st.caption("Captures the curve in patent growth, degree=2.")
+        show_chart("11_forecast_polynomial.png")
+
+# ══════════════════════════════════════════════════════════════
+#  PAGE 7 — SEARCH PATENTS
+# ══════════════════════════════════════════════════════════════
+elif page == "Search Patents":
+    st.title("Search Patents")
+    st.markdown("Search by keyword in patent titles.")
+    st.markdown("---")
+
+    keyword    = st.text_input("Enter a keyword:", placeholder="e.g. solar, battery, robot...")
+    year_range = st.slider("Filter by year:", min_value=1976, max_value=2024, value=(2010, 2024))
+
+    if keyword:
+        with st.spinner("Searching..."):
+            results = pd.read_sql("""
+                SELECT patent_id, title, year, type
+                FROM patents
+                WHERE LOWER(title) LIKE ?
+                  AND year BETWEEN ? AND ?
+                ORDER BY year DESC
+                LIMIT 200;
+            """, conn, params=(f"%{keyword.lower()}%", year_range[0], year_range[1]))
+
+        if len(results) == 0:
+            st.warning(f"No patents found for '{keyword}'")
+        else:
+            st.success(f"Found {len(results):,} results (showing up to 200)")
+            st.dataframe(results, use_container_width=True, hide_index=True)
+    else:
+        st.info("Type a keyword above to search patents.")
