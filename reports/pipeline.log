@@ -123,3 +123,16 @@ STARTED  export_for_cloud.py  [2026-05-07 21:12:05]
   >> countries
   OK (2366.2s)
 FINISHED export_for_cloud.py  — total 2405.2s  [21:52:10]
+
+=======================================================
+STARTED  export_for_cloud.py  [2026-05-07 22:43:00]
+=======================================================
+  >> yearly_patent_counts
+  OK (0.1s)
+  >> company_patent_counts
+  OK (4.4s)
+  >> inventor_patent_counts
+  OK (2.3s)
+  >> countries
+  OK (2023.5s)
+FINISHED export_for_cloud.py  — total 2030.2s  [23:16:50]

@@ -19,7 +19,11 @@ pd.read_sql("SELECT * FROM company_patent_counts", conn).to_csv("data/cloud/comp
 done()
 
 step("inventor_patent_counts")
-pd.read_sql("SELECT * FROM inventor_patent_counts", conn).to_csv("data/cloud/inventors.csv", index=False)
+pd.read_sql("""
+    SELECT * FROM inventor_patent_counts
+    ORDER BY patent_count DESC
+    LIMIT 1000
+""", conn).to_csv("data/cloud/inventors.csv", index=False)
 done()
 
 step("countries")
