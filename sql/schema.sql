@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS patents (
     patent_id   TEXT PRIMARY KEY,
     title       TEXT,
-    abstract    TEXT,        -- NULL in this dataset (not provided in bulk file)
+    abstract    TEXT,        -- 
     filing_date TEXT,
     year        INTEGER,
     type        TEXT         -- e.g. utility, design, plant
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS patents (
 CREATE TABLE IF NOT EXISTS inventors (
     inventor_id TEXT PRIMARY KEY,
     name        TEXT,
-    country     TEXT         -- location_id from source (UUID reference)
+    country     TEXT         -- using location dataset to map ids to countries
 );
 
 CREATE TABLE IF NOT EXISTS companies (

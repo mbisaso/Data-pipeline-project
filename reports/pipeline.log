@@ -99,3 +99,27 @@ STARTED  visualize.py  [2026-05-07 13:30:18]
   >> Chart 8: Top 15 Countries
   OK Chart 8: Top 15 Countries  (1677.3s)
 FINISHED visualize.py  — total 4272.8s  [14:41:31]
+
+=======================================================
+STARTED  export_for_cloud.py  [2026-05-07 19:01:15]
+=======================================================
+  >> yearly_patent_counts
+  OK (0.1s)
+  >> company_patent_counts
+  OK (3.4s)
+  >> inventor_patent_counts
+  OK (17.8s)
+FINISHED export_for_cloud.py  — total 21.3s  [19:01:36]
+
+=======================================================
+STARTED  export_for_cloud.py  [2026-05-07 21:12:05]
+=======================================================
+  >> yearly_patent_counts
+  OK (0.0s)
+  >> company_patent_counts
+  OK (7.5s)
+  >> inventor_patent_counts
+  OK (31.4s)
+  >> countries
+  OK (2366.2s)
+FINISHED export_for_cloud.py  — total 2405.2s  [21:52:10]

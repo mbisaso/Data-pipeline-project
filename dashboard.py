@@ -1,6 +1,5 @@
 # dashboard.py
 import streamlit as st
-import sqlite3
 import pandas as pd
 import json
 import os
@@ -12,43 +11,34 @@ st.set_page_config(
     layout="wide"
 )
 
-# ── Connect to DB ─────────────────────────────────────────────
-@st.cache_resource
-def get_connection():
-    conn = sqlite3.connect("patents.db", check_same_thread=False)
-    conn.execute("PRAGMA cache_size=-64000;")
-    conn.execute("PRAGMA temp_store=MEMORY;")
-    return conn
+# ── CSV data directory ─────────────────────────────────────────
+DATA_DIR = "data/cloud"
 
-conn = get_connection()
-
-# ── Load data from pre-built summary tables (instant) ─────────
+# ── Load from CSVs ────────────────────────────────────────────
 @st.cache_data
 def load_top_inventors():
-    return pd.read_sql("""
-        SELECT name, patent_count FROM inventor_patent_counts
-        ORDER BY patent_count DESC LIMIT 10;
-    """, conn)
+    df = pd.read_csv(f"{DATA_DIR}/inventors.csv")
+    return df[['name','patent_count']].sort_values('patent_count', ascending=False).head(10)
 
 @st.cache_data
 def load_top_companies():
-    return pd.read_sql("""
-        SELECT name, patent_count FROM company_patent_counts
-        ORDER BY patent_count DESC LIMIT 10;
-    """, conn)
+    df = pd.read_csv(f"{DATA_DIR}/companies.csv")
+    return df[['name','patent_count']].sort_values('patent_count', ascending=False).head(10)
 
 @st.cache_data
 def load_trends():
-    return pd.read_sql("""
-        SELECT year, total_patents FROM yearly_patent_counts ORDER BY year;
-    """, conn)
+    df = pd.read_csv(f"{DATA_DIR}/yearly.csv")
+    return df[['year','total_patents']].sort_values('year')
 
 @st.cache_data
 def load_summary():
-    total     = conn.execute("SELECT SUM(total_patents) FROM yearly_patent_counts").fetchone()[0]
-    total_inv = conn.execute("SELECT COUNT(*) FROM inventor_patent_counts").fetchone()[0]
-    total_co  = conn.execute("SELECT COUNT(*) FROM company_patent_counts").fetchone()[0]
-    return int(total or 0), int(total_inv), int(total_co)
+    yearly    = pd.read_csv(f"{DATA_DIR}/yearly.csv")
+    inventors = pd.read_csv(f"{DATA_DIR}/inventors.csv")
+    companies = pd.read_csv(f"{DATA_DIR}/companies.csv")
+    total     = int(yearly['total_patents'].sum())
+    total_inv = len(inventors)
+    total_co  = len(companies)
+    return total, total_inv, total_co
 
 @st.cache_data
 def load_countries():
@@ -62,17 +52,7 @@ def load_countries():
         'SG':'Singapore','NO':'Norway','RU':'Russia',
         'ES':'Spain','BR':'Brazil','AT':'Austria','DK':'Denmark',
     }
-    df = pd.read_sql("""
-        SELECT l.country AS country_code,
-               COUNT(DISTINCT pi.patent_id) AS patent_count
-        FROM inventors i
-        JOIN patent_inventor pi ON i.inventor_id = pi.inventor_id
-        JOIN locations l        ON i.country     = l.location_id
-        WHERE l.country IS NOT NULL AND l.country != ''
-        GROUP BY l.country
-        ORDER BY patent_count DESC
-        LIMIT 15;
-    """, conn)
+    df = pd.read_csv(f"{DATA_DIR}/countries.csv")
     df['country'] = df['country_code'].map(COUNTRY_NAMES).fillna(df['country_code'])
     return df
 
@@ -235,27 +215,8 @@ elif page == "Predictive Analytics":
 # ══════════════════════════════════════════════════════════════
 elif page == "Search Patents":
     st.title("Search Patents")
-    st.markdown("Search by keyword in patent titles.")
     st.markdown("---")
-
-    keyword    = st.text_input("Enter a keyword:", placeholder="e.g. solar, battery, robot...")
-    year_range = st.slider("Filter by year:", min_value=1976, max_value=2024, value=(2010, 2024))
-
-    if keyword:
-        with st.spinner("Searching..."):
-            results = pd.read_sql("""
-                SELECT patent_id, title, year, type
-                FROM patents
-                WHERE LOWER(title) LIKE ?
-                  AND year BETWEEN ? AND ?
-                ORDER BY year DESC
-                LIMIT 200;
-            """, conn, params=(f"%{keyword.lower()}%", year_range[0], year_range[1]))
-
-        if len(results) == 0:
-            st.warning(f"No patents found for '{keyword}'")
-        else:
-            st.success(f"Found {len(results):,} results (showing up to 200)")
-            st.dataframe(results, use_container_width=True, hide_index=True)
-    else:
-        st.info("Type a keyword above to search patents.")
+    st.info(
+        " Live search is unavailable in the cloud deployment. "
+        "Clone the repo and run locally with `patents.db` to enable this feature."
+    )
