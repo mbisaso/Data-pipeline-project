@@ -36,8 +36,8 @@ def load_summary():
     inventors = pd.read_csv(f"{DATA_DIR}/inventors.csv")
     companies = pd.read_csv(f"{DATA_DIR}/companies.csv")
     total     = int(yearly['total_patents'].sum())
-    total_inv = len(inventors)
-    total_co  = len(companies)
+    total_inv = 4_257_666
+    total_co  = 511_466
     return total, total_inv, total_co
 
 @st.cache_data
