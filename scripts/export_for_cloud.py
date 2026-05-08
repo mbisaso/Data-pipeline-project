@@ -15,7 +15,11 @@ pd.read_sql("SELECT * FROM yearly_patent_counts", conn).to_csv("data/cloud/yearl
 done()
 
 step("company_patent_counts")
-pd.read_sql("SELECT * FROM company_patent_counts", conn).to_csv("data/cloud/companies.csv", index=False)
+pd.read_sql("""
+    SELECT * FROM company_patent_counts
+    ORDER BY patent_count DESC
+    LIMIT 500
+""", conn).to_csv("data/cloud/companies.csv", index=False)
 done()
 
 step("inventor_patent_counts")
@@ -27,12 +31,15 @@ pd.read_sql("""
 done()
 
 step("countries")
+conn.execute("PRAGMA temp_store=MEMORY;")
+conn.execute("PRAGMA cache_size=-32000;")
 pd.read_sql("""
-    SELECT country AS country_code,
+    SELECT l.country AS country_code,
            COUNT(*) AS patent_count
-    FROM inventors
-    WHERE country IS NOT NULL AND country != ''
-    GROUP BY country
+    FROM inventors i
+    JOIN locations l ON i.country = l.location_id
+    WHERE l.country IS NOT NULL AND l.country != ''
+    GROUP BY l.country
     ORDER BY patent_count DESC
     LIMIT 15;
 """, conn).to_csv("data/cloud/countries.csv", index=False)

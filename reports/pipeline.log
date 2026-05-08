@@ -160,3 +160,42 @@ STARTED  export_for_cloud.py  [2026-05-08 05:49:54]
   >> countries
   OK (15.3s)
 FINISHED export_for_cloud.py  — total 22.9s  [05:50:17]
+
+=======================================================
+STARTED  export_for_cloud.py  [2026-05-08 06:31:43]
+=======================================================
+  >> yearly_patent_counts
+  OK (0.0s)
+  >> company_patent_counts
+  OK (0.2s)
+  >> inventor_patent_counts
+  OK (1.3s)
+  >> countries
+  OK (17.5s)
+FINISHED export_for_cloud.py  — total 19.1s  [06:32:02]
+
+=======================================================
+STARTED  export_for_cloud.py  [2026-05-08 06:58:43]
+=======================================================
+  >> yearly_patent_counts
+  OK (0.0s)
+  >> company_patent_counts
+  OK (0.2s)
+  >> inventor_patent_counts
+  OK (1.3s)
+  >> countries
+  OK (32.8s)
+FINISHED export_for_cloud.py  — total 34.2s  [06:59:17]
+
+=======================================================
+STARTED  export_for_cloud.py  [2026-05-08 07:16:34]
+=======================================================
+  >> yearly_patent_counts
+  OK (0.0s)
+  >> company_patent_counts
+  OK (0.2s)
+  >> inventor_patent_counts
+  OK (1.4s)
+  >> countries
+  OK (29.3s)
+FINISHED export_for_cloud.py  — total 30.9s  [07:17:05]
